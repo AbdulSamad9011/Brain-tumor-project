@@ -5,6 +5,7 @@ Run: streamlit run app.py
 """
 from __future__ import annotations
 
+import asyncio
 import tempfile
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from brain_tumor_dx.config import settings
 from brain_tumor_dx.data.io import load_nifti, load_image_2d
 from brain_tumor_dx.data.preprocessing import preprocess_for_classifier
 from brain_tumor_dx.models.classifier import TumorClassifier
+from brain_tumor_dx.report.generator import generate_report
+from brain_tumor_dx.report.schema import DiagnosticFinding
 
 
 def enhance_image(image: np.ndarray) -> Image.Image:
@@ -72,10 +75,12 @@ if uploaded is not None:
             st.image(enhance_image(image), use_container_width=True)
 
     # --- Classification ---
+    import torch
+
     with st.spinner("Classifying..."):
         model = TumorClassifier(num_classes=len(settings.tumor_classes))
         model.load_state_dict(
-            __import__("torch").load(settings.classifier_ckpt_path, map_location=settings.device)
+            torch.load(settings.classifier_ckpt_path, map_location=settings.device)
         )
         model.to(settings.device).eval()
 
@@ -84,18 +89,33 @@ if uploaded is not None:
         else:
             arr = preprocess_for_classifier(image, settings.classifier_input_size)
 
-        tensor = __import__("torch").from_numpy(arr).unsqueeze(0).to(settings.device)
-        with __import__("torch").no_grad():
-            probs = __import__("torch").softmax(model(tensor), dim=-1).squeeze().cpu().numpy()
+        tensor = torch.from_numpy(arr).unsqueeze(0).to(settings.device)
+        with torch.no_grad():
+            probs = torch.softmax(model(tensor), dim=-1).squeeze().cpu().numpy()
+
+    classes = settings.tumor_classes
+    pred_idx = int(probs.argmax())
+    prob_dict = {cls: float(p) for cls, p in zip(classes, probs)}
 
     with col2:
         st.subheader("Classification Results")
-        classes = settings.tumor_classes
-        pred_idx = int(probs.argmax())
         st.metric("Predicted type", classes[pred_idx], f"{probs[pred_idx]:.0%} confidence")
-        prob_dict = {cls: float(p) for cls, p in zip(classes, probs)}
         st.bar_chart(prob_dict)
 
-    st.subheader("All probabilities")
-    for cls, p in zip(classes, probs):
-        st.write(f"**{cls}**: {p:.4f}")
+    # --- Report Generation ---
+    st.divider()
+    with st.spinner("Generating report..."):
+        finding = DiagnosticFinding(
+            tumor_present=classes[pred_idx] != "no_tumor",
+            tumor_type=classes[pred_idx],
+            classification_confidence=float(probs[pred_idx]),
+            class_probabilities=prob_dict,
+            tumor_volume_mm3=0.0,
+            tumor_centroid=None,
+        )
+        report = asyncio.run(asyncio.to_thread(generate_report, finding))
+
+    st.subheader("Diagnostic Report")
+    st.markdown(report.narrative)
+    st.warning(report.confidence_note)
+    st.info(f"**Recommendation:** {report.recommendation}")

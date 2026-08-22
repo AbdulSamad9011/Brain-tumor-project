@@ -16,3 +16,5 @@ checkpoints/*
 
 .mlruns/
 .pytest_cache/
+brain-tumor-dx.tar.gz
+scripts/package_for_colab.bat

@@ -25,7 +25,7 @@ from torch.utils.data import Dataset
 
 from brain_tumor_dx.config import settings
 from brain_tumor_dx.data.io import load_image_2d, load_nifti
-from brain_tumor_dx.data.preprocessing import preprocess_for_classifier, preprocess_for_segmentation
+from brain_tumor_dx.data.preprocessing import preprocess_for_classifier, preprocess_for_segmentation, resize_volume
 
 
 class ClassificationDataset(Dataset):
@@ -72,7 +72,9 @@ class SegmentationDataset(Dataset):
         mask = load_nifti(case_dir / "mask.nii.gz")
 
         image = preprocess_for_segmentation(image, self.input_size)
-        mask = preprocess_for_segmentation(mask, self.input_size)
-        mask = (mask > 0.5).astype(np.float32)  # binarize after resampling
+        # Resize mask with nearest-neighbor (no normalization/skull-stripping)
+        mask = resize_volume(mask, self.input_size, order=0, anti_aliasing=False)
+        mask = (mask > 0.5).astype(np.float32)
+        mask = mask[np.newaxis, ...]  # add channel dim to match image
 
         return torch.from_numpy(image), torch.from_numpy(mask)

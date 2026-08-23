@@ -41,11 +41,11 @@ def resize_2d(image: np.ndarray, size: int) -> np.ndarray:
     return resize(image, (size, size), anti_aliasing=True, preserve_range=True).astype(np.float32)
 
 
-def resize_volume(volume: np.ndarray, size: int) -> np.ndarray:
+def resize_volume(volume: np.ndarray, size: int, order: int = 1, anti_aliasing: bool = True) -> np.ndarray:
     from skimage.transform import resize
 
     return resize(
-        volume, (size, size, size), anti_aliasing=True, preserve_range=True
+        volume, (size, size, size), order=order, anti_aliasing=anti_aliasing, preserve_range=True
     ).astype(np.float32)
 
 

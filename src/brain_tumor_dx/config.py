@@ -19,6 +19,23 @@ def _env(key: str, default: str) -> str:
     return os.getenv(key, default)
 
 
+def _resolve_device() -> str:
+    import torch
+
+    requested = os.getenv("DEVICE", "cpu")
+    if requested == "cuda" and torch.cuda.is_available():
+        cap = torch.cuda.get_device_capability()[0]
+        if cap < 7:
+            print(
+                f"[config] GPU compute capability {cap}.x — older GPU, training may be slower."
+            )
+        return "cuda"
+    if requested == "cuda" and not torch.cuda.is_available():
+        print("[config] CUDA requested but not available — falling back to CPU.")
+        return "cpu"
+    return requested
+
+
 @dataclass
 class Settings:
     # API keys (report generation only — never touch pixel-level inference)
@@ -34,12 +51,7 @@ class Settings:
     )
 
     # Inference
-    # Change this line:
-    device: str = field(
-        default_factory=lambda: _env(
-            "DEVICE", "cuda" if __import__("torch").cuda.is_available() else "cpu"
-        )
-    )
+    device: str = field(default_factory=_resolve_device)
     classifier_input_size: int = field(default_factory=lambda: int(_env("CLASSIFIER_INPUT_SIZE", "224")))
     segmentation_input_size: int = field(default_factory=lambda: int(_env("SEGMENTATION_INPUT_SIZE", "128")))
     confidence_threshold: float = field(default_factory=lambda: float(_env("CONFIDENCE_THRESHOLD", "0.5")))

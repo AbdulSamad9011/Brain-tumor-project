@@ -5,7 +5,6 @@ Run: streamlit run app.py
 """
 from __future__ import annotations
 
-import asyncio
 import tempfile
 from pathlib import Path
 
@@ -16,7 +15,8 @@ from PIL import Image
 from brain_tumor_dx.config import settings
 from brain_tumor_dx.data.io import load_nifti, load_image_2d
 from brain_tumor_dx.data.preprocessing import preprocess_for_classifier
-from brain_tumor_dx.models.classifier import TumorClassifier
+from brain_tumor_dx.inference.segment import segment_volume
+from brain_tumor_dx.models.registry import load_classifier
 from brain_tumor_dx.report.generator import generate_report
 from brain_tumor_dx.report.schema import DiagnosticFinding
 
@@ -44,8 +44,9 @@ uploaded = st.file_uploader(
 
 if uploaded is not None:
     suffix = Path(uploaded.name).suffix.lower()
+    is_volume = suffix in (".nii", ".gz")
 
-    if suffix in (".nii", ".gz"):
+    if is_volume:
         with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as tmp:
             tmp.write(uploaded.getvalue())
             tmp_path = Path(tmp.name)
@@ -74,20 +75,14 @@ if uploaded is not None:
             st.subheader("Uploaded image")
             st.image(enhance_image(image), use_container_width=True)
 
-    # --- Classification ---
     import torch
 
+    # --- Classification ---
     with st.spinner("Classifying..."):
-        model = TumorClassifier(num_classes=len(settings.tumor_classes))
-        model.load_state_dict(
-            torch.load(settings.classifier_ckpt_path, map_location=settings.device)
-        )
-        model.to(settings.device).eval()
+        model = load_classifier()
 
-        if suffix in (".nii", ".gz"):
-            arr = preprocess_for_classifier(mid_slice, settings.classifier_input_size)
-        else:
-            arr = preprocess_for_classifier(image, settings.classifier_input_size)
+        slice_for_classifier = mid_slice if is_volume else image
+        arr = preprocess_for_classifier(slice_for_classifier, settings.classifier_input_size)
 
         tensor = torch.from_numpy(arr).unsqueeze(0).to(settings.device)
         with torch.no_grad():
@@ -102,6 +97,24 @@ if uploaded is not None:
         st.metric("Predicted type", classes[pred_idx], f"{probs[pred_idx]:.0%} confidence")
         st.bar_chart(prob_dict)
 
+    # --- Segmentation (3D volumes only) ---
+    tumor_volume_mm3 = 0.0
+    tumor_centroid = None
+
+    if is_volume:
+        with st.spinner("Segmenting tumor volume..."):
+            seg_result = segment_volume(volume)
+            tumor_volume_mm3 = seg_result["volume_mm3"]
+            tumor_centroid = seg_result["centroid"]
+
+        with col2:
+            st.subheader("Segmentation Results")
+            st.metric("Tumor volume", f"{tumor_volume_mm3:.1f} mm³")
+            if tumor_centroid is not None:
+                st.caption(f"Centroid (z, y, x): {tumor_centroid}")
+            else:
+                st.caption("No tumor voxels detected by segmentation model.")
+
     # --- Report Generation ---
     st.divider()
     with st.spinner("Generating report..."):
@@ -110,10 +123,10 @@ if uploaded is not None:
             tumor_type=classes[pred_idx],
             classification_confidence=float(probs[pred_idx]),
             class_probabilities=prob_dict,
-            tumor_volume_mm3=0.0,
-            tumor_centroid=None,
+            tumor_volume_mm3=tumor_volume_mm3,
+            tumor_centroid=tumor_centroid,
         )
-        report = asyncio.run(asyncio.to_thread(generate_report, finding))
+        report = generate_report(finding)
 
     st.subheader("Diagnostic Report")
     st.markdown(report.narrative)

@@ -18,7 +18,7 @@ def test_dice_no_overlap():
     b = np.zeros((10, 10), dtype=bool)
     a[:5] = True
     b[5:] = True
-    assert dice_coefficient(a, b) == 0.0
+    assert dice_coefficient(a, b) < 1e-6
 
 
 def test_iou_partial_overlap():

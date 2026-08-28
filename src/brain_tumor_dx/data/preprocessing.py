@@ -57,8 +57,16 @@ def preprocess_for_classifier(image: np.ndarray, input_size: int) -> np.ndarray:
 
 
 def preprocess_for_segmentation(volume: np.ndarray, input_size: int) -> np.ndarray:
-    """3D volume -> skull-stripped, normalized, resampled, channel-first array."""
-    volume = skull_strip_naive(volume)
+    """3D volume -> clipped, normalized, resampled, channel-first array.
+
+    Skips skull_strip_naive because BraTS data is already pre-processed.
+    The naive percentile threshold destroys 85% of voxels in this dataset.
+    Instead, clip to [0, 99.5th percentile] then normalize.
+    """
+    volume = volume.copy()
+    # Clip extreme outliers (keep 0.5-99.5 percentile range)
+    p_low, p_high = np.percentile(volume[volume > 0], [0.5, 99.5]) if (volume > 0).any() else (0, 1)
+    volume = np.clip(volume, p_low, p_high)
     volume = normalize_intensity(volume)
     volume = resize_volume(volume, input_size)
     return volume[np.newaxis, ...]  # add channel dim

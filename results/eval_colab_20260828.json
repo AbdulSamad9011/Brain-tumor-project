@@ -1,0 +1,81 @@
+{
+  "timestamp": "20260828_colab",
+  "classifier": {
+    "config": {
+      "model": "ResNet50",
+      "backbone": "resnet50",
+      "pretrained": "ImageNet1K_V2",
+      "dataset": "Kaggle Brain Tumor MRI",
+      "dataset_size": 5429,
+      "classes": ["glioma", "meningioma", "pituitary", "no_tumor"],
+      "train_split": 0.85,
+      "val_split": 0.15,
+      "train_size": 4615,
+      "val_size": 814,
+      "epochs": 20,
+      "best_epoch": 9,
+      "early_stop_epoch": 19,
+      "batch_size": 32,
+      "lr": 1e-4,
+      "optimizer": "AdamW",
+      "weight_decay": 1e-4,
+      "scheduler": "CosineAnnealingLR",
+      "label_smoothing": 0.1,
+      "device": "Tesla T4 (16GB VRAM)"
+    },
+    "results": {
+      "accuracy": 0.9889,
+      "precision_macro": 0.9889,
+      "recall_macro": 0.9890,
+      "f1_macro": 0.9890,
+      "auc_roc_macro": 0.9999,
+      "kappa": 0.9852,
+      "mcc": 0.9852,
+      "train_accuracy": 1.0000,
+      "per_class": {
+        "glioma": {
+          "precision": 0.9949,
+          "recall": 0.9949,
+          "f1": 0.9949,
+          "support": 198
+        },
+        "meningioma": {
+          "precision": 0.9904,
+          "recall": 0.9763,
+          "f1": 0.9833,
+          "support": 211
+        },
+        "pituitary": {
+          "precision": 0.9862,
+          "recall": 0.9954,
+          "f1": 0.9908,
+          "support": 216
+        },
+        "no_tumor": {
+          "precision": 0.9842,
+          "recall": 0.9894,
+          "f1": 0.9868,
+          "support": 189
+        }
+      }
+    }
+  },
+  "segmenter": {
+    "config": {
+      "model": "MONAI 3D-UNet",
+      "dataset": "BraTS2020",
+      "dataset_size": 369,
+      "train_split": 0.80,
+      "val_split": 0.20,
+      "loss": "Dice + BCE (pos_weight=10.0)",
+      "augmentation": "Random flips (3 axes)",
+      "device": "CPU (too large for 2GB VRAM)"
+    },
+    "results": {
+      "train_mean_dice": 0.24,
+      "test_mean_dice": 0.24,
+      "note": "Needs retraining with more epochs and GPU memory"
+    }
+  },
+  "notes": "Colab training run. Classifier achieved SOTA-level 98.89% accuracy. Segmenter needs improvement — class imbalance and insufficient training."
+}

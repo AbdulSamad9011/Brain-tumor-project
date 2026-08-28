@@ -24,6 +24,8 @@ def load_classifier() -> TumorClassifier:
     ckpt_path = Path(settings.classifier_ckpt_path)
     if ckpt_path.exists():
         state = torch.load(ckpt_path, map_location=settings.device)
+        if any(not k.startswith("net.") for k in state.keys()):
+            state = {f"net.{k}": v for k, v in state.items()}
         model.load_state_dict(state)
     else:
         print(f"[registry] No checkpoint at {ckpt_path} — using ImageNet-initialized weights only.")

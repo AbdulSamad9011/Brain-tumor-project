@@ -35,9 +35,12 @@ class ClassificationDataset(Dataset):
         self.classes = list(settings.tumor_classes)
         self.samples: list[tuple[Path, int]] = []
         for label_idx, cls in enumerate(self.classes):
-            for f in (self.root / cls).glob("*"):
+            for f in sorted((self.root / cls).glob("*")):
                 if f.suffix.lower() in {".jpg", ".jpeg", ".png"}:
                     self.samples.append((f, label_idx))
+
+        # Sort globally for deterministic ordering across runs
+        self.samples.sort(key=lambda x: str(x[0]))
 
         if not self.samples:
             raise FileNotFoundError(

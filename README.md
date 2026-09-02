@@ -126,5 +126,5 @@ To be upfront about scaffold vs. production-ready, since this matters more than 
 | Grad-CAM | Real, assumes ResNet50 backbone |
 
 ## License
+It is an Apache licensed project.
 
-No license file included — add one (e.g. MIT) if you intend this to be used or modified by others. Given the health domain, also worth adding clear terms around clinical use before anyone treats this as more than a research prototype.

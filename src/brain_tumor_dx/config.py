@@ -34,7 +34,12 @@ class Settings:
     )
 
     # Inference
-    device: str = field(default_factory=lambda: _env("DEVICE", "cpu"))
+    # Change this line:
+    device: str = field(
+        default_factory=lambda: _env(
+            "DEVICE", "cuda" if __import__("torch").cuda.is_available() else "cpu"
+        )
+    )
     classifier_input_size: int = field(default_factory=lambda: int(_env("CLASSIFIER_INPUT_SIZE", "224")))
     segmentation_input_size: int = field(default_factory=lambda: int(_env("SEGMENTATION_INPUT_SIZE", "128")))
     confidence_threshold: float = field(default_factory=lambda: float(_env("CONFIDENCE_THRESHOLD", "0.5")))

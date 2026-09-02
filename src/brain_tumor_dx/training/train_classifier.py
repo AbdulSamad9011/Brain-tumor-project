@@ -18,7 +18,7 @@ from brain_tumor_dx.models.classifier import TumorClassifier
 
 def train(data_root: str, epochs: int, batch_size: int, lr: float, out_path: str):
     dataset = ClassificationDataset(data_root)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
     model = TumorClassifier(num_classes=len(settings.tumor_classes)).to(settings.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)

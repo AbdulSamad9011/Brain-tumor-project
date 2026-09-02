@@ -14,7 +14,7 @@ from brain_tumor_dx.inference.classify import classify_slice
 from brain_tumor_dx.inference.fusion import fuse
 from brain_tumor_dx.inference.segment import segment_volume
 from brain_tumor_dx.report.generator import generate_report
-from brain_tumor_dx.report.schema import DiagnosticReport
+from brain_tumor_dx.report.schema import DiagnosticFinding, DiagnosticReport
 
 
 async def run_pipeline(slice_2d: np.ndarray, volume_3d: np.ndarray) -> DiagnosticReport:
@@ -32,5 +32,24 @@ async def run_pipeline(slice_2d: np.ndarray, volume_3d: np.ndarray) -> Diagnosti
     classification, segmentation = await asyncio.gather(classification_task, segmentation_task)
 
     finding = fuse(classification, segmentation)
+    report = await asyncio.to_thread(generate_report, finding)
+    return report
+
+
+async def run_classification_only(image: np.ndarray) -> DiagnosticReport:
+    """Classification-only pipeline — no segmentation required.
+    Works with 2D MRI images (jpg/png).
+    """
+    classification = await asyncio.to_thread(classify_slice, image)
+
+    finding = DiagnosticFinding(
+        tumor_present=classification["label"] != "no_tumor",
+        tumor_type=classification["label"],
+        classification_confidence=classification["confidence"],
+        class_probabilities=classification["probabilities"],
+        tumor_volume_mm3=0.0,
+        tumor_centroid=None,
+    )
+
     report = await asyncio.to_thread(generate_report, finding)
     return report

@@ -186,5 +186,5 @@ All settings are controlled via environment variables (`.env` file):
 ---
 
 ## License
+It is an Apache licensed project.
 
-MIT — see [LICENSE](LICENSE).

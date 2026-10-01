@@ -1,7 +1,8 @@
-"""Pointers + folder scaffolding for the two public datasets this project
-is built around. Actual downloads require accepting dataset licenses on
-Kaggle / the BraTS challenge site, so this script sets up the expected
-directory layout rather than fetching data itself.
+"""Sets up the expected data directory layout for the two training datasets.
+
+Actual downloads require accepting dataset licenses on Kaggle / the BraTS
+challenge site, so this script creates the expected directory tree and
+prints download instructions. Run once before your first training run.
 """
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ data/raw/segmentation/
 """
 
 
-def scaffold_dirs():
+def setup_dirs():
     for cls in ("glioma", "meningioma", "pituitary", "no_tumor"):
         Path(f"data/raw/classification/{cls}").mkdir(parents=True, exist_ok=True)
     Path("data/raw/segmentation").mkdir(parents=True, exist_ok=True)
@@ -41,4 +42,4 @@ def scaffold_dirs():
 
 
 if __name__ == "__main__":
-    scaffold_dirs()
+    setup_dirs()

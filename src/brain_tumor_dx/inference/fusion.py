@@ -1,6 +1,8 @@
-"""Merge classification + segmentation outputs into one structured Finding —
-the equivalent of SubAgentFindings in the research-agent project. The
-report generator only ever sees this, never raw pixels."""
+"""Merge classification + segmentation outputs into one structured DiagnosticFinding.
+
+The report generator only ever sees this fused structure — never raw
+model internals, tensors, or pixel data.
+"""
 from __future__ import annotations
 
 from brain_tumor_dx.report.schema import DiagnosticFinding

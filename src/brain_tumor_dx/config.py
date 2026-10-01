@@ -1,8 +1,8 @@
 """Central configuration for the brain tumor diagnosis pipeline.
 
-Mirrors the settings pattern from the research-agent project: everything
-is env-driven with sane defaults, loaded once via a module-level Settings
-instance.
+All settings are env-driven with sane defaults and loaded once at import
+time via a module-level Settings instance. Override any value by setting
+the corresponding environment variable (or via a .env file).
 """
 from __future__ import annotations
 
@@ -22,18 +22,22 @@ def _env(key: str, default: str) -> str:
 def _resolve_device() -> str:
     import torch
 
-    requested = os.getenv("DEVICE", "cpu")
-    if requested == "cuda" and torch.cuda.is_available():
+    requested = os.getenv("DEVICE", "").strip()
+    if requested:
+        if requested.startswith("cuda") and not torch.cuda.is_available():
+            print("[config] CUDA requested but not available — falling back to CPU.")
+            return "cpu"
+        return requested
+
+    if torch.cuda.is_available():
         cap = torch.cuda.get_device_capability()[0]
         if cap < 7:
             print(
                 f"[config] GPU compute capability {cap}.x — older GPU, training may be slower."
             )
         return "cuda"
-    if requested == "cuda" and not torch.cuda.is_available():
-        print("[config] CUDA requested but not available — falling back to CPU.")
-        return "cpu"
-    return requested
+
+    return "cpu"
 
 
 @dataclass

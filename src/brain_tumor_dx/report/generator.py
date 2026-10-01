@@ -1,9 +1,10 @@
-"""Turns a DiagnosticFinding into a clinician-readable report.
+"""Turns a DiagnosticFinding into a clinician-readable DiagnosticReport.
 
-Deliberately narrow: the LLM only ever sees the structured numbers below,
-never the image itself — it narrates, it does not diagnose from pixels.
-Follows the same init_chat_model + structured-output pattern as
-agents/summarizer.py in the research-agent project.
+The LLM only ever sees the structured, pre-computed numbers from the
+classifier and segmenter — never raw pixels. It narrates the model outputs
+into a report; it does not diagnose from imagery.
+Uses LangChain's init_chat_model with structured output (JSON Schema mode)
+so the report is always a validated Pydantic object.
 """
 from __future__ import annotations
 

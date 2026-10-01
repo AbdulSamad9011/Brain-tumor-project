@@ -11,9 +11,9 @@ from brain_tumor_dx.config import settings
 def gradcam_overlay(model, input_tensor: torch.Tensor, target_class: int) -> np.ndarray:
     """Returns a (H, W) heatmap in [0, 1], same spatial size as the input.
 
-    Uses the `grad-cam` package's implementation rather than a hand-rolled
-    hook. The target layer below assumes a ResNet backbone — change it if
-    you swap architectures in models/classifier.py.
+    Uses the `grad-cam` package's GradCAM implementation with the last
+    conv block of the ResNet backbone as the target layer. Change
+    `target_layer` if you swap architectures in models/classifier.py.
     """
     from pytorch_grad_cam import GradCAM
     from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget

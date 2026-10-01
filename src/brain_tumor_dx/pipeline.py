@@ -1,8 +1,8 @@
-"""End-to-end orchestration: preprocessing -> classify + segment (concurrently)
--> fuse -> report. The scaffold's equivalent of graph.py in the research-agent
-project, minus LangGraph — there's no branching plan to route here, so a
-plain async function is enough. Swap in LangGraph later if you add more
-stages (e.g. a critic node, or a human-in-the-loop re-scan request loop).
+"""End-to-end pipeline orchestration: preprocessing -> classify + segment (concurrently)
+-> fuse -> report. Classification and segmentation run concurrently via asyncio,
+then their outputs are fused into a structured DiagnosticFinding before the
+LLM report generator narrates the result. The LLM only ever receives the
+structured numbers — never raw pixels.
 """
 from __future__ import annotations
 

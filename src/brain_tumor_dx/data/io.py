@@ -11,7 +11,8 @@ def load_nifti(path: str | Path) -> np.ndarray:
     import nibabel as nib
 
     img = nib.load(str(path))
-    return np.asarray(img.get_fdata(), dtype=np.float32)
+    data = np.asarray(img.get_fdata(), dtype=np.float32)
+    return data.squeeze()
 
 
 def load_dicom_series(directory: str | Path) -> np.ndarray:

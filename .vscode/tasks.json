@@ -1,0 +1,107 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Dependencies",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m pip install -e '.[train,dev]'",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m pytest tests/ -v",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests (with coverage)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m pytest tests/ -v --tb=short",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Streamlit",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/streamlit run app.py --server.headless=true",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Start FastAPI",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/uvicorn serving.api:app --reload --port 8000",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint (ruff check)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m ruff check src/ tests/ scripts/",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(?<file>.+\\.py):(?<line>\\d+):(?<col>\\d+): (?<code>\\w+) (?<message>.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Format (ruff format)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m ruff format src/ tests/ scripts/",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Download Dataset",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python scripts/download_data.py",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean __pycache__",
+            "type": "shell",
+            "command": "find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; find . -name '*.pyc' -delete 2>/dev/null; echo 'Done'",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

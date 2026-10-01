@@ -24,6 +24,8 @@ def load_classifier() -> TumorClassifier:
     ckpt_path = Path(settings.classifier_ckpt_path)
     if ckpt_path.exists():
         state = torch.load(ckpt_path, map_location=settings.device)
+        if any(not k.startswith("net.") for k in state.keys()):
+            state = {f"net.{k}": v for k, v in state.items()}
         model.load_state_dict(state)
     else:
         print(f"[registry] No checkpoint at {ckpt_path} — using ImageNet-initialized weights only.")
@@ -33,16 +35,32 @@ def load_classifier() -> TumorClassifier:
     return model
 
 
-def load_segmenter() -> TumorSegmenter:
+def load_segmenter(in_channels: int = 1) -> TumorSegmenter:
     global _segmenter_cache
     if _segmenter_cache is not None:
         return _segmenter_cache
 
-    model = TumorSegmenter()
+    model = TumorSegmenter(in_channels=in_channels)
     ckpt_path = Path(settings.segmentation_ckpt_path)
     if ckpt_path.exists():
         state = torch.load(ckpt_path, map_location=settings.device)
-        model.load_state_dict(state)
+        if isinstance(state, dict) and "model_state_dict" in state:
+            state = state["model_state_dict"]
+        elif isinstance(state, dict) and "state_dict" in state:
+            state = state["state_dict"]
+
+        # Adapt first conv layer if channel count doesn't match
+        first_conv_key = "enc1.conv.0.weight"
+        if first_conv_key in state:
+            ckpt_in_channels = state[first_conv_key].shape[1]
+            if ckpt_in_channels != in_channels:
+                if in_channels == 1:
+                    # Average across multi-modal channels into single channel
+                    state[first_conv_key] = state[first_conv_key].mean(dim=1, keepdim=True)
+                else:
+                    state[first_conv_key] = state[first_conv_key].repeat(1, in_channels, 1, 1, 1)[:, :in_channels]
+
+        model.load_state_dict(state, strict=False)
     else:
         print(f"[registry] No checkpoint at {ckpt_path} — using randomly-initialized weights only.")
 

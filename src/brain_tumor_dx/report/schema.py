@@ -1,6 +1,8 @@
-"""Structured schemas for the diagnosis pipeline — mirrors the
-Pydantic-everywhere pattern from the research-agent project so the LLM
-report step consumes typed data, never raw model internals."""
+"""Pydantic schemas for the diagnosis pipeline.
+
+The LLM report step only ever receives a DiagnosticFinding — a fully typed,
+validated data structure — never raw model internals or pixel data.
+"""
 from __future__ import annotations
 
 from typing import Optional

@@ -4,7 +4,7 @@ This folder is intentionally empty in version control (`.gitignore` excludes
 everything except `.gitkeep`) — datasets are large and license-restricted,
 so they're never committed.
 
-Run `python scripts/download_data.py` to scaffold the expected directory
+Run `python scripts/download_data.py` to create the expected directory
 layout, then manually download:
 
 - **Classification**: Kaggle "Brain Tumor MRI Dataset"

@@ -28,7 +28,7 @@ def load_classifier() -> TumorClassifier:
             state = {f"net.{k}": v for k, v in state.items()}
         model.load_state_dict(state)
     else:
-        print(f"[registry] No checkpoint at {ckpt_path} — using ImageNet-initialized weights only.")
+        print(f"[registry] WARNING: checkpoint not found at {ckpt_path} — check CLASSIFIER_CKPT_PATH in .env. Running with ImageNet weights only.")
 
     model.to(settings.device).eval()
     _classifier_cache = model
@@ -62,7 +62,7 @@ def load_segmenter(in_channels: int = 1) -> TumorSegmenter:
 
         model.load_state_dict(state, strict=False)
     else:
-        print(f"[registry] No checkpoint at {ckpt_path} — using randomly-initialized weights only.")
+        print(f"[registry] WARNING: checkpoint not found at {ckpt_path} — check SEGMENTATION_CKPT_PATH in .env. Running with random weights only.")
 
     model.to(settings.device).eval()
     _segmenter_cache = model
